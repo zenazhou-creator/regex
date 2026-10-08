@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL提取并生成正则工具</title>
+   <style>
+    * {
+        box-sizing: border-box;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+        padding: 20px;
+        max-width: 900px;
+        margin: 0 auto;
+        background: #f6f3fb;
+        color: #292333;
+    }
+
+    .container {
+        background: #fff;
+        padding: 24px;
+        border-radius: 14px;
+        border: 1px solid #e8e0f5;
+        box-shadow: 0 4px 20px rgba(91, 63, 125, 0.08);
+    }
+
+    h2 {
+        margin: 0 0 18px;
+        font-size: 20px;
+        line-height: 1.4;
+        font-weight: 650;
+        color: #3d2857;
+    }
+
+    textarea {
+        width: 100%;
+        min-height: 160px;
+        padding: 12px;
+        border: 1px solid #d9cfea;
+        border-radius: 9px;
+        font-size: 14px;
+        white-space: pre;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        background: #fdfcff;
+        color: #30263a;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+        border-color: #8b5fc7;
+        box-shadow: 0 0 0 3px rgba(139, 95, 199, 0.12);
+    }
+
+    .btn-group {
+        margin: 16px 0;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #7651a8, #5d3b87);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 3px 8px rgba(93, 59, 135, 0.18);
+    }
+
+    button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 12px rgba(93, 59, 135, 0.25);
+    }
+
+    button#clear {
+        background: #eeeaf5;
+        color: #5d4a70;
+        box-shadow: none;
+    }
+
+    button#clear:hover {
+        background: #e4ddef;
+        box-shadow: none;
+    }
+
+    button#copyResult {
+        background: linear-gradient(135deg, #9a70cf, #7651a8);
+    }
+
+    label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #40304f;
+    }
+
+    .resultWrap {
+        margin-top: 8px;
+    }
+
+    #result {
+        background: #faf7ff;
+        border-color: #d9c7ef;
+        color: #4b3363;
+    }
+
+    .tip {
+        font-size: 13px;
+        color: #81758d;
+        margin-top: 6px;
+        line-height: 1.6;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>URL批量提取路径 + 生成GA4正则匹配式</h2>
+    <p class="tip">输入URL，一行一条，自动截取域名后面的路径，输出：.*(路径1|路径2|路径3).*</p>
+
+    <label>输入URL列表（一行一个）：</label>
+    <textarea id="urlInput" placeholder="粘贴URL，示例：
+https://edimakor.hitpaw.de/ai-video-tools/kiwerbung-erstellen-kostenlos.html
+https://edimakor.hitpaw.de/video-editing-tips/seedream-5-pro-examples.html"></textarea>
+
+    <div class="btn-group">
+        <button id="generate">生成正则</button>
+        <button id="clear">清空</button>
+        <button id="copyResult">复制结果</button>
+    </div>
+
+    <label>输出正则（可直接粘贴GA4过滤器）：</label>
+    <div class="resultWrap">
+        <textarea id="result" readonly></textarea>
+    </div>
+    <p class="tip">说明：自动提取域名之后的完整路径，拼接 | 分组，外层包装 .*(...).*</p>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+$("#generate").onclick = ()=>{
+    const raw = $("#urlInput").value.trim();
+    if(!raw){alert("请输入URL列表");return;}
+    const lines = raw.split(/\n/).map(x=>x.trim()).filter(x=>x);
+    const paths = [];
+    for(let line of lines){
+        try{
+            const u = new URL(line);
+            const path = u.pathname.slice(1); //去掉开头/
+            paths.push(path);
+        }catch(e){
+            alert(`无效URL：${line}`);
+            return;
+        }
+    }
+    const group = paths.join("|");
+    const regex = `.*(${group}).*`;
+    $("#result").value = regex;
+};
+
+$("#clear").onclick = ()=>{
+    $("#urlInput").value = "";
+    $("#result").value = "";
+};
+
+$("#copyResult").onclick = async ()=>{
+    const text = $("#result").value;
+    if(!text) return;
+    try{
+        await navigator.clipboard.writeText(text);
+        alert("✅ 已复制到剪贴板！");
+    }catch(err){
+        alert("复制失败，请手动选中复制");
+    }
+};
+</script>
+</body>
+</html>
